@@ -2,6 +2,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <thread>
+#include "socks5.h"
 
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
@@ -17,7 +18,7 @@ int forward(SOCKET src, SOCKET dst)
         recvbuflen = recv(src, recvbuf, DEFAULT_BUFLEN, 0);
         if (recvbuflen > 0)
         {
-            printf("%d\n", recvbuflen);
+            printf("%s\n", recvbuf);
             send(dst, recvbuf, recvbuflen, 0);
         }
     } while (recvbuflen > 0);
@@ -37,6 +38,15 @@ inline void process(SOCKET client)
         WSACleanup();
         return;
     }
+
+    // SOCKS5
+    struct sockaddr_in socks5addr;
+    socks5addr.sin_family = AF_INET;
+    inet_pton(AF_INET, "127.0.0.1", &(socks5addr.sin_addr));
+    socks5addr.sin_port = htons(2801);
+
+    SOCKS5 socks5((SOCKADDR*)&socks5addr,sizeof(socks5addr));
+
     //----------------------
     // The sockaddr_in structure specifies the address family,
     // IP address, and port of the server to be connected to.
@@ -44,7 +54,7 @@ inline void process(SOCKET client)
     clientService.sin_family = AF_INET;
     inet_pton(AF_INET, "107.181.87.5", &(clientService.sin_addr));
     clientService.sin_port = htons(80);
-    int iResult = connect(target, (SOCKADDR*)&clientService, sizeof(clientService));
+    int iResult = socks5.Connect(target, &clientService, sizeof(clientService));
     if (iResult == SOCKET_ERROR) {
         wprintf(L"connect failed with error: %d\n", WSAGetLastError());
         closesocket(target);
