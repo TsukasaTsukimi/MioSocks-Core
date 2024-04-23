@@ -5,6 +5,8 @@
 #include <cstdint>
 
 #pragma comment(lib, "Ws2_32.lib")
+/* Disable byte pack for struct */
+#pragma pack(1)
 
 class SOCKS5
 {
@@ -65,7 +67,12 @@ private:
 
 	struct Ipv4Address
 	{
-		uint8_t     Byte[4];
+		union
+		{
+			uint32_t    addr;
+			uint8_t     Byte[4];
+		};
+		uint16_t DST_PORT;
 	};
 
 	struct Ipv6Address
@@ -112,13 +119,12 @@ private:
 			Ipv6Address     ipv6;
 			DomainName      domain;
 		} DST_ADDR;
-		uint16_t DST_PORT;
 
 		Requests(Command cmd, const sockaddr_in* name);
 		operator const char* () const { return reinterpret_cast<const char*>(this); }
 		int Size() const
 		{
-			int len = offsetof(Requests, DST_ADDR) + sizeof(DST_PORT);
+			int len = offsetof(Requests, DST_ADDR);
 			switch (ATYP)
 			{
 			case AddressType_Ipv4:
@@ -139,13 +145,17 @@ private:
 		ReplyType REP;
 		uint8_t RSV;
 		AddressType ATYP;
-		union
+		struct
 		{
-			Ipv4Address     ipv4;
-			Ipv6Address     ipv6;
-			DomainName      domain;
-		} bind_addr;
-		uint16_t DST_PORT;
+			union
+			{
+				Ipv4Address     ipv4;
+				Ipv6Address     ipv6;
+				DomainName      domain;
+			};
+			uint16_t DST_PORT;
+		}bind_addr;
+		
 
 		Replies();
 		operator char* () { return reinterpret_cast<char*>(this); }

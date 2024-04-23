@@ -21,16 +21,11 @@ int SOCKS5::Connect(SOCKET s, const sockaddr_in* name, int namelen)
 	// Send Authentication Request
 	{
 		AuthRequest auth(AuthMethod_Unauthorized);
-		int len = auth.Size();
-		do
+		int ret = send(s, auth, auth.Size(), 0);
+		if (ret == SOCKET_ERROR)
 		{
-			int ret = send(s, auth, len, 0);
-			if (ret == SOCKET_ERROR)
-			{
-				return ret;
-			}
-			len -= ret;
-		} while (len > 0);
+			return ret;
+		}
 	}
 
 	// Recv Authentication Response
@@ -47,16 +42,15 @@ int SOCKS5::Connect(SOCKET s, const sockaddr_in* name, int namelen)
 	// SOCKS request
 	{
 		Requests request(Command_Connect, name);
-		int len = request.Size();
-		do
+		int ret = send(s, request, request.Size(), 0);
+		if (ret == SOCKET_ERROR)
 		{
-			int ret = send(s, request, len, 0);
-			if (ret == SOCKET_ERROR)
-			{
-				return ret;
-			}
-			len -= ret;
-		} while (len > 0);
+			return ret;
+		}
+		printf("Size: %u, Array:", request.Size());
+		for (int i = 0; i < request.Size(); i++)
+			printf("%u ", request[i]);
+		printf("\n");
 	}
 
 	// SOCKS reply
@@ -68,7 +62,26 @@ int SOCKS5::Connect(SOCKET s, const sockaddr_in* name, int namelen)
 		{
 			return ret;
 		}
-		printf("Socks5 connected: %u, %u\n", reply.VER, name->sin_port);
+		switch (reply.ATYP)
+		{
+		case AddressType_Ipv4:
+		{
+			int ret = recv(s, (char*)&reply.bind_addr.ipv4, sizeof(Ipv4Address), 0);
+			if (ret == SOCKET_ERROR)
+			{
+				return ret;
+			}
+			printf("BND: %u %u %u %u, %u\n",
+				reply.bind_addr.ipv4.Byte[0],
+				reply.bind_addr.ipv4.Byte[1],
+				reply.bind_addr.ipv4.Byte[2],
+				reply.bind_addr.ipv4.Byte[3],
+				reply.bind_addr.DST_PORT);
+			break;
+		}
+			
+		}
+		
 	}
 	
 	return 0;
@@ -88,10 +101,12 @@ SOCKS5::AuthResponse::AuthResponse()
 }
 
 SOCKS5::Requests::Requests(Command cmd, const sockaddr_in* name)
+	:VER(Version_5),
+	CMD(cmd),
+	RSV(0x00),
+	ATYP(AddressType_Ipv4),
+	DST_ADDR()
 {
-	VER = Version_5;
-	CMD = cmd;
-	RSV = 0x00;
 	switch (name->sin_family)
 	{
 	case AF_INET:
@@ -102,6 +117,13 @@ SOCKS5::Requests::Requests(Command cmd, const sockaddr_in* name)
 		DST_ADDR.ipv4.Byte[1] = addr->S_un.S_un_b.s_b2;
 		DST_ADDR.ipv4.Byte[2] = addr->S_un.S_un_b.s_b3;
 		DST_ADDR.ipv4.Byte[3] = addr->S_un.S_un_b.s_b4;
+		DST_ADDR.ipv4.DST_PORT = name->sin_port;
+		printf("ipv4: %u %u %u %u, %u\n",
+			DST_ADDR.ipv4.Byte[0],
+			DST_ADDR.ipv4.Byte[1],
+			DST_ADDR.ipv4.Byte[2],
+			DST_ADDR.ipv4.Byte[3],
+			name->sin_port);
 		break;
 	}
 	case AF_INET6:
@@ -113,7 +135,6 @@ SOCKS5::Requests::Requests(Command cmd, const sockaddr_in* name)
 		break;
 	}
 	}
-	DST_PORT = name->sin_port;
 }
 
 SOCKS5::Replies::Replies()
@@ -123,5 +144,5 @@ SOCKS5::Replies::Replies()
 	REP = ReplyType_Undefined;
 	RSV = 0x00;
 	ATYP = AddressType_Undefined;
-	DST_PORT = 0x00;
+	bind_addr.DST_PORT = 0x00;
 }
