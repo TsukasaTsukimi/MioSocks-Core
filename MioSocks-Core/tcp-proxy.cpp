@@ -18,7 +18,7 @@ int forward(SOCKET src, SOCKET dst)
         recvbuflen = recv(src, recvbuf, DEFAULT_BUFLEN, 0);
         if (recvbuflen > 0)
         {
-            printf("%s\n", recvbuf);
+            //printf("%s\n", recvbuf);
             send(dst, recvbuf, recvbuflen, 0);
         }
     } while (recvbuflen > 0);

@@ -78,18 +78,20 @@ private:
 	struct Ipv6Address
 	{
 		uint16_t    Byte[16];
+		uint16_t	DST_PORT;
 	};
 
 	struct DomainName
 	{
-		uint8_t       length;
-		uint8_t       name[255];
+		uint8_t		length;
+		uint8_t		name[255];
+		uint16_t	DST_PORT;
 	};
 
 	struct AuthRequest
 	{
-		Version VER;
-		uint8_t	NMETHODS;
+		Version		VER;
+		uint8_t		NMETHODS;
 		AuthMethod	METHODS[255];
 
 		AuthRequest(AuthMethod method);
@@ -153,7 +155,6 @@ private:
 				Ipv6Address     ipv6;
 				DomainName      domain;
 			};
-			uint16_t DST_PORT;
 		}bind_addr;
 		
 

@@ -47,10 +47,6 @@ int SOCKS5::Connect(SOCKET s, const sockaddr_in* name, int namelen)
 		{
 			return ret;
 		}
-		printf("Size: %u, Array:", request.Size());
-		for (int i = 0; i < request.Size(); i++)
-			printf("%u ", request[i]);
-		printf("\n");
 	}
 
 	// SOCKS reply
@@ -71,12 +67,6 @@ int SOCKS5::Connect(SOCKET s, const sockaddr_in* name, int namelen)
 			{
 				return ret;
 			}
-			printf("BND: %u %u %u %u, %u\n",
-				reply.bind_addr.ipv4.Byte[0],
-				reply.bind_addr.ipv4.Byte[1],
-				reply.bind_addr.ipv4.Byte[2],
-				reply.bind_addr.ipv4.Byte[3],
-				reply.bind_addr.DST_PORT);
 			break;
 		}
 			
@@ -118,12 +108,6 @@ SOCKS5::Requests::Requests(Command cmd, const sockaddr_in* name)
 		DST_ADDR.ipv4.Byte[2] = addr->S_un.S_un_b.s_b3;
 		DST_ADDR.ipv4.Byte[3] = addr->S_un.S_un_b.s_b4;
 		DST_ADDR.ipv4.DST_PORT = name->sin_port;
-		printf("ipv4: %u %u %u %u, %u\n",
-			DST_ADDR.ipv4.Byte[0],
-			DST_ADDR.ipv4.Byte[1],
-			DST_ADDR.ipv4.Byte[2],
-			DST_ADDR.ipv4.Byte[3],
-			name->sin_port);
 		break;
 	}
 	case AF_INET6:
@@ -132,6 +116,7 @@ SOCKS5::Requests::Requests(Command cmd, const sockaddr_in* name)
 		const in6_addr* addr = (const in6_addr*)&name->sin_addr;
 		for (int i = 0; i < 16; i++)
 			DST_ADDR.ipv6.Byte[i] = addr->u.Byte[i];
+		DST_ADDR.ipv6.DST_PORT = name->sin_port;
 		break;
 	}
 	}
@@ -144,5 +129,4 @@ SOCKS5::Replies::Replies()
 	REP = ReplyType_Undefined;
 	RSV = 0x00;
 	ATYP = AddressType_Undefined;
-	bind_addr.DST_PORT = 0x00;
 }
