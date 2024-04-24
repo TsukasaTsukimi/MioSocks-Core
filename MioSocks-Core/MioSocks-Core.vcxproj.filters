@@ -15,15 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tcp-proxy.cpp">
+    <ClCompile Include="tcp2socks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="socks5.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tcp-proxy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="socks5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="windivert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tcp2socks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

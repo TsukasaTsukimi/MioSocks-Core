@@ -1,5 +1,4 @@
 #include "socks5.h"
-#include <iostream>
 
 SOCKS5::SOCKS5(const sockaddr* name, int namelen)
 {

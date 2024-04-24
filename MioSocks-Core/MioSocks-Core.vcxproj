@@ -128,10 +128,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="tcp-proxy.cpp" />
+    <ClCompile Include="tcp2socks.cpp" />
     <ClCompile Include="socks5.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="socks5.h" />
+    <ClInclude Include="tcp2socks.h" />
+    <ClInclude Include="windivert.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
