@@ -17,7 +17,7 @@ static void forward(SOCKET src, SOCKET dst)
     closesocket(dst);
 }
 
-static void process(SOCKET client)
+static void process(SOCKET client, UINT32 addr, UINT16 port)
 {
     SOCKET target = INVALID_SOCKET;
     //----------------------
@@ -42,8 +42,10 @@ static void process(SOCKET client)
     // IP address, and port of the server to be connected to.
     struct sockaddr_in clientService;
     clientService.sin_family = AF_INET;
-    inet_pton(AF_INET, "107.181.87.5", &(clientService.sin_addr));
-    clientService.sin_port = htons(80);
+    //inet_pton(AF_INET, "107.181.87.5", &(clientService.sin_addr));
+    clientService.sin_addr.S_un.S_addr = M[port].DstAddr;
+    clientService.sin_port = htons(M[port].DstPort);
+    printf("SOCKS5: %u:%u\n", M[port].DstAddr, M[port].DstPort);
     int iResult = socks5.Connect(target, &clientService, sizeof(clientService));
     if (iResult == SOCKET_ERROR) {
         wprintf(L"connect failed with error: %d\n", WSAGetLastError());
@@ -110,7 +112,9 @@ int Tcp2Socks_Listen()
     // Accept the connection.
     while (1)
     {
-        AcceptSocket = accept(ListenSocket, NULL, NULL);
+        struct sockaddr_in AcceptAddr;
+        int AddrLen = sizeof(AcceptAddr);
+        AcceptSocket = accept(ListenSocket, (SOCKADDR*)&AcceptAddr, &AddrLen);
         if (AcceptSocket == INVALID_SOCKET) {
             wprintf(L"accept failed with error: %ld\n", WSAGetLastError());
             closesocket(ListenSocket);
@@ -119,9 +123,11 @@ int Tcp2Socks_Listen()
         }
         else
         {
-            wprintf(L"Client connected.\n");
-
-            std::thread th(process, AcceptSocket);
+            UINT32 addr = AcceptAddr.sin_addr.S_un.S_addr;
+            UINT16 port = AcceptAddr.sin_port;
+            wprintf(L"Client connected: %u:%u\n", addr, ntohs(port));
+            
+            std::thread th(process, AcceptSocket, addr, ntohs(port));
             th.detach();
         }
     }

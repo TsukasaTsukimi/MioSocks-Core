@@ -9,6 +9,8 @@
 
 const int MAXBUF = 65536;
 
+NetTuple M[65536];
+
 int main()
 {
 	std::thread th(Tcp2Socks_Listen);
@@ -55,20 +57,28 @@ int main()
 
 		if (ip_header->Version == 4)
 		{
-			if (ip_header->DstAddr == target && tcp_header->DstPort == htons(80))
+			if (tcp_header->SrcPort == htons(2805))
 			{
-				printf("[->]%u:%u %u:%u\n", ip_header->SrcAddr, htons(tcp_header->SrcPort), ip_header->DstAddr, htons(tcp_header->DstPort));
+				printf("[<-]%u:%u %u:%u\n", ip_header->SrcAddr, htons(tcp_header->SrcPort), ip_header->DstAddr, htons(tcp_header->DstPort));
 				UINT32 dst_addr = ip_header->DstAddr;
-				tcp_header->DstPort = htons(2805);
+				UINT16 dst_port = ntohs(tcp_header->DstPort);
+				tcp_header->SrcPort = htons(M[dst_port].DstPort);
 				ip_header->DstAddr = ip_header->SrcAddr;
 				ip_header->SrcAddr = dst_addr;
 				addr.Outbound = FALSE;
 			}
-			else if (tcp_header->SrcPort == htons(2805))
+			else if (/*ip_header->DstAddr == target && */tcp_header->DstPort == htons(443) || tcp_header->DstPort == htons(80))
 			{
-				printf("[<-]%u:%u %u:%u\n", ip_header->SrcAddr, htons(tcp_header->SrcPort), ip_header->DstAddr, htons(tcp_header->DstPort));
+				printf("[->]%u:%u %u:%u\n", ip_header->SrcAddr, htons(tcp_header->SrcPort), ip_header->DstAddr, htons(tcp_header->DstPort));
+				UINT32 srcaddr = ip_header->SrcAddr;
+				UINT16 srcport = ntohs(tcp_header->SrcPort);
+				UINT32 dstaddr = ip_header->DstAddr;
+				UINT16 dstport = ntohs(tcp_header->DstPort);
+				M[srcport] = { srcaddr, srcport, dstaddr, dstport };
+				
+
 				UINT32 dst_addr = ip_header->DstAddr;
-				tcp_header->SrcPort = htons(80);
+				tcp_header->DstPort = htons(2805);
 				ip_header->DstAddr = ip_header->SrcAddr;
 				ip_header->SrcAddr = dst_addr;
 				addr.Outbound = FALSE;
